@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using System.Drawing;
 using System.Threading;
 using System.Runtime.InteropServices;
+using Gma.System.MouseKeyHook;
 
 //Ryan Harrison 2011
 //raharrison.co.uk
@@ -20,6 +21,7 @@ namespace Auto_Clicker
                                     //so UI is not made unresponsive
 
         private Point CurrentPosition { get; set; } //The current position of the mouse cursor
+        private IKeyboardMouseEvents m_GlobalHook;//global key handling
 
         #endregion
 
@@ -43,15 +45,21 @@ namespace Auto_Clicker
         /// </summary>
         private void MainForm_Load(object sender, EventArgs e)
         {
+            //global key handling
+            m_GlobalHook = Hook.GlobalEvents();
+            m_GlobalHook.KeyDown += GlobalHookKeyPress;
+
             CurrentPositionTimer.Start();
             PositionsListView.Items.Clear();
+            DDLLoad_SaveFiles();
+
+            LoadSave("Default");
         }
 
-        /// <summary>
-        /// Handle keyboard shortcuts from the user
-        /// </summary>
-        private void MainForm_KeyDown(object sender, KeyEventArgs e)
+        //global key handling
+        private void GlobalHookKeyPress(object sender, KeyEventArgs e)
         {
+            Console.WriteLine("KeyPress: \t{0}", e.KeyCode);
             if (e.KeyCode == Keys.F1)
             {
                 CopyToAddButton_Click(null, null);
@@ -60,11 +68,11 @@ namespace Auto_Clicker
             {
                 AddPositionButton_Click(null, null);
             }
-            else if (e.KeyCode == Keys.F2)
+            else if (e.KeyCode == Keys.F3)
             {
                 StartClickingButton_Click(null, null);
             }
-            else if (e.KeyCode == Keys.F2)
+            else if (e.KeyCode == Keys.F4)
             {
                 StopClickingButton_Click(null, null);
             }
@@ -109,6 +117,8 @@ namespace Auto_Clicker
                     item.SubItems.Add(clickType);
                     item.SubItems.Add(sleepTime.ToString());
                     PositionsListView.Items.Add(item);
+
+                    SaveHelper.SaveEverything("Default", NumRepeatsTextBox, PositionsListView);
                 }
                 else
                 {
@@ -146,7 +156,7 @@ namespace Auto_Clicker
                 try
                 {
                     //Create a ClickHelper passing Lists of click information
-                    ClickThreadHelper helper = new ClickThreadHelper() { Points = points, ClickType = clickType, Iterations = iterations, Times = times };
+                    ClickThreadHelper helper = new ClickThreadHelper() { Points = points, ClickType = clickType, Iterations = iterations, Times = times, StatusLabel = lblCurrentState };
                     //Create the thread passing the Run method
                     ClickThread = new Thread(new ThreadStart(helper.Run));
                     //Start the thread, thus starting the clicks
@@ -270,6 +280,7 @@ namespace Auto_Clicker
             public int Iterations { get; set; } //Hold the number of iterations/repeats
             public List<string> ClickType { get; set; } //Is each point right click or left click
             public List<int> Times { get; set; } //Holds sleep times for after each click
+            public Label StatusLabel { get; set; }
 
             //Import unmanaged functions from DLL library
             [DllImport("user32.dll")]
@@ -393,6 +404,19 @@ namespace Auto_Clicker
 
             #region Methods
 
+
+            public delegate void SetStateTextConsumer(string text, Color color);
+            public void SetStateText(string text, Color color)
+            {
+                if (StatusLabel.InvokeRequired)
+                    StatusLabel.Invoke(new SetStateTextConsumer(SetStateText), new object[] { text, color });
+                else
+                {
+                    StatusLabel.ForeColor = color;
+                    StatusLabel.Text = text;
+                }
+            }
+
             /// <summary>
             /// Iterate through all queued clicks, for each deciding which mouse button
             /// to press and how long to sleep afterwards
@@ -408,6 +432,7 @@ namespace Auto_Clicker
 
                     while (i <= Iterations)
                     {
+                        SetStateText($@"Running - Iteration {i}/{Iterations}",Color.Green);
                         //Iterate through all queued clicks
                         for (int j = 0; j <= Points.Count - 1; j++)
                         {
@@ -424,9 +449,11 @@ namespace Auto_Clicker
                         }
                         i++;
                     }
+                    SetStateText($@"Competed - {Iterations} Iterations", Color.Blue);
                 }
                 catch (Exception exc)
                 {
+                    SetStateText($@"Error - {exc.Message}", Color.Red);
                     MessageBox.Show(exc.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -444,5 +471,95 @@ namespace Auto_Clicker
         }
 
         #endregion
+
+        private void DDLLoad_SaveFiles()
+        {
+            List<string> files = new List<string>();
+
+            files.Add("Default");
+            files.AddRange(SaveHelper.GetSaveFileList());
+            files.Add("--Add New--");
+
+            ddlFileNames.DataSource = files;
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            string savename = ddlFileNames.SelectedValue.ToString();
+            if (savename == "--Add New--")
+            {
+                //create new
+                savename = Microsoft.VisualBasic.Interaction.InputBox("Enter a name", "New Save File");
+
+            }
+            SaveHelper.SaveEverything(savename, NumRepeatsTextBox, PositionsListView);
+            DDLLoad_SaveFiles();
+            ddlFileNames.SelectedItem = savename;
+        }
+
+        private void btnLoad_Click(object sender, EventArgs e)
+        {
+            PositionsListView.Items.Clear();
+            string savename = ddlFileNames.SelectedValue.ToString();            
+            LoadSave(savename);
+        }
+
+        private void LoadSave(string Name)
+        {
+            SaveValues sv = SaveHelper.LoadEverything(Name);
+            if (sv != null)
+            {
+                NumRepeatsTextBox.Text = sv.NumberToRepeat.ToString();
+
+                foreach (CursorPositionValue pv in sv.CusorPositions)
+                {
+                    ListViewItem item = new ListViewItem(pv.X.ToString());
+                    item.SubItems.Add(pv.Y.ToString());
+                    item.SubItems.Add(pv.RightClick == true ? "R" : "L");
+                    item.SubItems.Add(pv.Sleep.ToString());
+                    PositionsListView.Items.Add(item);
+                }
+            }
+        }
+
+        private void PositionsListView_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                ListViewItem item = PositionsListView.SelectedItems[0];
+                if (item != null)
+                {
+                    QueuedXPositionTextBox.Text = item.Text;
+                    QueuedYPositionTextBox.Text = item.SubItems[1].Text;
+                    RightClickCheckBox.Checked = item.SubItems[2].Text == "R" ? true : false;
+                    SleepTimeTextBox.Text = item.SubItems[3].Text;
+                }
+            }
+            catch (Exception) { }
+        }
+        
+        private void btnUpdateRow_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                ListViewItem item = PositionsListView.SelectedItems[0];
+                if (item != null)
+                {
+                    item.Text = QueuedXPositionTextBox.Text;
+                    item.SubItems[1].Text = QueuedYPositionTextBox.Text;
+                    item.SubItems[2].Text = RightClickCheckBox.Checked == true ? "R" : "L";
+                    item.SubItems[3].Text = SleepTimeTextBox.Text;
+                }
+
+                SaveHelper.SaveEverything("Default", NumRepeatsTextBox, PositionsListView);
+            }
+            catch (Exception) { }
+        }
+
+        private void NumRepeatsTextBox_TextChanged(object sender, EventArgs e)
+        {
+            SaveHelper.SaveEverything("Default", NumRepeatsTextBox, PositionsListView);
+        }
+
     }
 }

@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.PositionsGroupBox = new System.Windows.Forms.GroupBox();
+            this.btnUpdateRow = new System.Windows.Forms.Button();
             this.SleepTimeTextBox = new System.Windows.Forms.TextBox();
             this.QueuedYPositionTextBox = new System.Windows.Forms.TextBox();
             this.RightClickCheckBox = new System.Windows.Forms.CheckBox();
@@ -60,7 +61,10 @@
             this.NumRepeatsTextBox = new System.Windows.Forms.TextBox();
             this.NumRepeatsLabel = new System.Windows.Forms.Label();
             this.CurrentPositionTimer = new System.Windows.Forms.Timer(this.components);
-            this.AboutLabel = new System.Windows.Forms.Label();
+            this.btnSave = new System.Windows.Forms.Button();
+            this.btnLoad = new System.Windows.Forms.Button();
+            this.ddlFileNames = new System.Windows.Forms.ComboBox();
+            this.lblCurrentState = new System.Windows.Forms.Label();
             this.PositionsGroupBox.SuspendLayout();
             this.ListViewContextMenu.SuspendLayout();
             this.CurrentPosGroupBox.SuspendLayout();
@@ -69,6 +73,7 @@
             // 
             // PositionsGroupBox
             // 
+            this.PositionsGroupBox.Controls.Add(this.btnUpdateRow);
             this.PositionsGroupBox.Controls.Add(this.SleepTimeTextBox);
             this.PositionsGroupBox.Controls.Add(this.QueuedYPositionTextBox);
             this.PositionsGroupBox.Controls.Add(this.RightClickCheckBox);
@@ -86,6 +91,16 @@
             this.PositionsGroupBox.TabStop = false;
             this.PositionsGroupBox.Text = "Cursor Positions";
             // 
+            // btnUpdateRow
+            // 
+            this.btnUpdateRow.Location = new System.Drawing.Point(80, 222);
+            this.btnUpdateRow.Name = "btnUpdateRow";
+            this.btnUpdateRow.Size = new System.Drawing.Size(70, 23);
+            this.btnUpdateRow.TabIndex = 12;
+            this.btnUpdateRow.Text = "Update";
+            this.btnUpdateRow.UseVisualStyleBackColor = true;
+            this.btnUpdateRow.Click += new System.EventHandler(this.btnUpdateRow_Click);
+            // 
             // SleepTimeTextBox
             // 
             this.SleepTimeTextBox.Location = new System.Drawing.Point(227, 254);
@@ -96,9 +111,9 @@
             // 
             // QueuedYPositionTextBox
             // 
-            this.QueuedYPositionTextBox.Location = new System.Drawing.Point(256, 225);
+            this.QueuedYPositionTextBox.Location = new System.Drawing.Point(279, 225);
             this.QueuedYPositionTextBox.Name = "QueuedYPositionTextBox";
-            this.QueuedYPositionTextBox.Size = new System.Drawing.Size(87, 20);
+            this.QueuedYPositionTextBox.Size = new System.Drawing.Size(64, 20);
             this.QueuedYPositionTextBox.TabIndex = 10;
             // 
             // RightClickCheckBox
@@ -116,24 +131,24 @@
             this.SleepTimeLabel.AutoSize = true;
             this.SleepTimeLabel.Location = new System.Drawing.Point(115, 257);
             this.SleepTimeLabel.Name = "SleepTimeLabel";
-            this.SleepTimeLabel.Size = new System.Drawing.Size(106, 13);
+            this.SleepTimeLabel.Size = new System.Drawing.Size(103, 13);
             this.SleepTimeLabel.TabIndex = 5;
-            this.SleepTimeLabel.Text = "Time to Sleep (.ms) - ";
+            this.SleepTimeLabel.Text = "Time to Sleep (ms) - ";
             // 
             // AddPositionButton
             // 
             this.AddPositionButton.Location = new System.Drawing.Point(6, 222);
             this.AddPositionButton.Name = "AddPositionButton";
-            this.AddPositionButton.Size = new System.Drawing.Size(111, 23);
+            this.AddPositionButton.Size = new System.Drawing.Size(70, 23);
             this.AddPositionButton.TabIndex = 4;
-            this.AddPositionButton.Text = "Add Position (F2)";
+            this.AddPositionButton.Text = "Add (F2)";
             this.AddPositionButton.UseVisualStyleBackColor = true;
             this.AddPositionButton.Click += new System.EventHandler(this.AddPositionButton_Click);
             // 
             // QueuedXPositionLabel
             // 
             this.QueuedXPositionLabel.AutoSize = true;
-            this.QueuedXPositionLabel.Location = new System.Drawing.Point(123, 228);
+            this.QueuedXPositionLabel.Location = new System.Drawing.Point(173, 228);
             this.QueuedXPositionLabel.Name = "QueuedXPositionLabel";
             this.QueuedXPositionLabel.Size = new System.Drawing.Size(14, 13);
             this.QueuedXPositionLabel.TabIndex = 7;
@@ -142,7 +157,7 @@
             // QueuedYPositionLabel
             // 
             this.QueuedYPositionLabel.AutoSize = true;
-            this.QueuedYPositionLabel.Location = new System.Drawing.Point(236, 228);
+            this.QueuedYPositionLabel.Location = new System.Drawing.Point(263, 228);
             this.QueuedYPositionLabel.Name = "QueuedYPositionLabel";
             this.QueuedYPositionLabel.Size = new System.Drawing.Size(14, 13);
             this.QueuedYPositionLabel.TabIndex = 8;
@@ -150,9 +165,9 @@
             // 
             // QueuedXPositionTextBox
             // 
-            this.QueuedXPositionTextBox.Location = new System.Drawing.Point(143, 225);
+            this.QueuedXPositionTextBox.Location = new System.Drawing.Point(193, 224);
             this.QueuedXPositionTextBox.Name = "QueuedXPositionTextBox";
-            this.QueuedXPositionTextBox.Size = new System.Drawing.Size(87, 20);
+            this.QueuedXPositionTextBox.Size = new System.Drawing.Size(64, 20);
             this.QueuedXPositionTextBox.TabIndex = 8;
             // 
             // PositionsListView
@@ -165,12 +180,15 @@
             this.PositionsListView.ContextMenuStrip = this.ListViewContextMenu;
             this.PositionsListView.FullRowSelect = true;
             this.PositionsListView.GridLines = true;
+            this.PositionsListView.HideSelection = false;
             this.PositionsListView.Location = new System.Drawing.Point(6, 32);
+            this.PositionsListView.MultiSelect = false;
             this.PositionsListView.Name = "PositionsListView";
             this.PositionsListView.Size = new System.Drawing.Size(338, 181);
             this.PositionsListView.TabIndex = 1;
             this.PositionsListView.UseCompatibleStateImageBehavior = false;
             this.PositionsListView.View = System.Windows.Forms.View.Details;
+            this.PositionsListView.SelectedIndexChanged += new System.EventHandler(this.PositionsListView_SelectedIndexChanged);
             // 
             // XCoordHeader
             // 
@@ -319,6 +337,7 @@
             this.NumRepeatsTextBox.Size = new System.Drawing.Size(141, 20);
             this.NumRepeatsTextBox.TabIndex = 1;
             this.NumRepeatsTextBox.Text = "1";
+            this.NumRepeatsTextBox.TextChanged += new System.EventHandler(this.NumRepeatsTextBox_TextChanged);
             // 
             // NumRepeatsLabel
             // 
@@ -334,21 +353,52 @@
             this.CurrentPositionTimer.Interval = 1;
             this.CurrentPositionTimer.Tick += new System.EventHandler(this.CurrentPositionTimer_Tick);
             // 
-            // AboutLabel
+            // btnSave
             // 
-            this.AboutLabel.AutoSize = true;
-            this.AboutLabel.Location = new System.Drawing.Point(12, 285);
-            this.AboutLabel.Name = "AboutLabel";
-            this.AboutLabel.Size = new System.Drawing.Size(186, 13);
-            this.AboutLabel.TabIndex = 3;
-            this.AboutLabel.Text = "Ryan Harrison 2011 - raharrison.co.uk";
+            this.btnSave.Location = new System.Drawing.Point(512, 288);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(61, 23);
+            this.btnSave.TabIndex = 4;
+            this.btnSave.Text = "Save";
+            this.btnSave.UseVisualStyleBackColor = true;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            // 
+            // btnLoad
+            // 
+            this.btnLoad.Location = new System.Drawing.Point(574, 288);
+            this.btnLoad.Name = "btnLoad";
+            this.btnLoad.Size = new System.Drawing.Size(61, 23);
+            this.btnLoad.TabIndex = 5;
+            this.btnLoad.Text = "Load";
+            this.btnLoad.UseVisualStyleBackColor = true;
+            this.btnLoad.Click += new System.EventHandler(this.btnLoad_Click);
+            // 
+            // ddlFileNames
+            // 
+            this.ddlFileNames.FormattingEnabled = true;
+            this.ddlFileNames.Location = new System.Drawing.Point(385, 290);
+            this.ddlFileNames.Name = "ddlFileNames";
+            this.ddlFileNames.Size = new System.Drawing.Size(121, 21);
+            this.ddlFileNames.TabIndex = 6;
+            // 
+            // label1
+            // 
+            this.lblCurrentState.AutoSize = true;
+            this.lblCurrentState.Location = new System.Drawing.Point(21, 297);
+            this.lblCurrentState.Name = "label1";
+            this.lblCurrentState.Size = new System.Drawing.Size(35, 13);
+            this.lblCurrentState.TabIndex = 7;
+            this.lblCurrentState.Text = "label1";
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(643, 307);
-            this.Controls.Add(this.AboutLabel);
+            this.ClientSize = new System.Drawing.Size(641, 315);
+            this.Controls.Add(this.lblCurrentState);
+            this.Controls.Add(this.ddlFileNames);
+            this.Controls.Add(this.btnLoad);
+            this.Controls.Add(this.btnSave);
             this.Controls.Add(this.StartingOptionsGroupBox);
             this.Controls.Add(this.CurrentPosGroupBox);
             this.Controls.Add(this.PositionsGroupBox);
@@ -359,7 +409,6 @@
             this.Name = "MainForm";
             this.Text = "Auto Clicker";
             this.Load += new System.EventHandler(this.MainForm_Load);
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainForm_KeyDown);
             this.PositionsGroupBox.ResumeLayout(false);
             this.PositionsGroupBox.PerformLayout();
             this.ListViewContextMenu.ResumeLayout(false);
@@ -404,7 +453,11 @@
         private System.Windows.Forms.ContextMenuStrip ListViewContextMenu;
         private System.Windows.Forms.ToolStripMenuItem RemoveAllMenuItem;
         private System.Windows.Forms.ToolStripMenuItem RemoveSelectedMenuItem;
-        private System.Windows.Forms.Label AboutLabel;
+        private System.Windows.Forms.Button btnSave;
+        private System.Windows.Forms.Button btnLoad;
+        private System.Windows.Forms.Button btnUpdateRow;
+        private System.Windows.Forms.ComboBox ddlFileNames;
+        private System.Windows.Forms.Label lblCurrentState;
     }
 }
 
